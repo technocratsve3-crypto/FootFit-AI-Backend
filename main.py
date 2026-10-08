@@ -9,13 +9,24 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 
+# ============================================================
+# FASTAPI APP
+# ============================================================
+
 app = FastAPI(title="FootFit-AI Backend")
+
+
+# ============================================================
+# CORS
+#
+# Allows the Lovable/Netlify frontend to communicate
+# with the Render backend from a web browser.
+# ============================================================
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://shoeadvisor.netlify.app"
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -28,6 +39,10 @@ app.add_middleware(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, "models")
 
+
+# ============================================================
+# EXISTING ORANGE MODELS
+# ============================================================
 
 MODEL_FILES = {
     "Random Forest": "random_forest.pkcls",
@@ -63,7 +78,7 @@ def extract_features(image_path):
 
     original_height, original_width = image.shape[:2]
 
-    # Same scaling method used in our Stage 2 testing
+    # Same scaling method used in Stage 2 testing
     upscale_factor = min(
         8.0,
         max(1.0, 1200 / max(original_width, original_height))
@@ -103,7 +118,10 @@ def extract_features(image_path):
         upper
     )
 
+    # --------------------------------------------------------
     # Clean segmentation
+    # --------------------------------------------------------
+
     kernel = cv2.getStructuringElement(
         cv2.MORPH_ELLIPSE,
         (5, 5)
@@ -416,7 +434,6 @@ def decide_final_prediction(predictions):
         if top_3_votes == 3:
 
             confidence = "High"
-
             top_3_status = "3–0 agreement"
 
         # ----------------------------------------------------
@@ -426,7 +443,6 @@ def decide_final_prediction(predictions):
         elif top_3_votes == 2:
 
             confidence = "Moderate"
-
             top_3_status = "2–1 majority"
 
         # ----------------------------------------------------
@@ -436,7 +452,6 @@ def decide_final_prediction(predictions):
         else:
 
             confidence = "Low"
-
             top_3_status = "No clear majority"
 
         return {
@@ -549,7 +564,6 @@ async def predict(file: UploadFile = File(...)):
         ) as temp_file:
 
             temp_file.write(contents)
-
             temp_path = temp_file.name
 
         # ----------------------------------------------------
